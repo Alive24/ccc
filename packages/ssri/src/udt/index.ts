@@ -1,10 +1,9 @@
-import { ccc } from "@ckb-ccc/core";
-import { Address } from "../../../core/src/address";
-import { ScriptLike } from "../../../core/src/ckb/script";
 import {
+  Address,
   OutPointLike,
+  ScriptLike,
   TransactionLike,
-} from "../../../core/src/ckb/transaction";
+} from "@ckb-ccc/core";
 import { SSRICallParams, SSRIContract, SSRIServer } from "../ssri";
 import { UDTExtended } from "../udtExtended";
 import { UDTMetadata } from "../udtMetadata";
@@ -67,11 +66,11 @@ export class UDT extends SSRIContract {
    * @param {ScriptLike[]} toLockArray - The array of lock scripts for the recipients.
    * @param {bigint[]} amountArray - The array of amounts to be transferred.
    * @param {SSRICallParams} [params] - The parameters for the call.
-   * @returns {Promise<{ tx: ccc.TransactionLike }>} The transaction result.
+   * @returns {Promise<{ tx: TransactionLike }>} The transaction result.
    * @throws {Error} Throws an error if the function is not yet implemented.
    */
   async transfer(
-    tx?: TransactionLike,
+    tx: TransactionLike | null,
     toLockArray: ScriptLike[],
     amountArray: bigint[],
     params?: SSRICallParams,

@@ -1,5 +1,5 @@
 import { ScriptLike } from "../../../core/src/ckb/script";
-import { TransactionLike } from "../../../core/src/ckb/transaction";
+import { Transaction, TransactionLike } from "../../../core/src/ckb/transaction";
 import { HexLike } from "../../../core/src/hex";
 import { UDT } from "../udt/index";
 
@@ -27,7 +27,7 @@ export class UDTExtended {
    * @tag Mutation - This method represents a mutation of the onchain state and will return a transaction to be sent.
    */
   async mint(
-    tx?: TransactionLike,
+    tx: TransactionLike | null,
     toLockVec: ScriptLike[],
     toAmountVec: bigint[],
   ): Promise<Transaction | null> {
@@ -45,7 +45,7 @@ export class UDTExtended {
    * @tag Mutation - This method represents a mutation of the onchain state and will return a transaction to be sent.
    */
   async approve(
-    tx?: TransactionLike,
+    tx: TransactionLike | null,
     spenderLockHash: HexLike,
     amount: bigint,
   ): Promise<void> {
@@ -79,7 +79,7 @@ export class UDTExtended {
    * @tag Mutation - This method represents a mutation of the onchain state and will return a transaction to be sent.
    */
   async increaseAllowance(
-    tx?: TransactionLike,
+    tx: TransactionLike | null,
     spenderLockHash: HexLike,
     addedValue: bigint,
   ): Promise<void> {
@@ -96,7 +96,7 @@ export class UDTExtended {
    * @tag Mutation - This method represents a mutation of the onchain state and will return a transaction to be sent.
    */
   async decreaseAllowance(
-    tx?: TransactionLike,
+    tx: TransactionLike | null,
     spenderLockHash: HexLike,
     subtractedValue: bigint,
   ): Promise<void> {

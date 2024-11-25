@@ -1,11 +1,12 @@
-import { ccc } from "@ckb-ccc/ccc";
 import {
+  Bytes,
+  BytesLike,
   CellLike,
+  Client,
   OutPointLike,
   ScriptLike,
   TransactionLike,
-} from "../../../core/src/barrel";
-import { Bytes, BytesLike } from "../../../core/src/bytes";
+} from "@ckb-ccc/core";
 
 /**
  * Represents the parameters for an SSRI call. By providing a script, cell, or transaction, the call environment would be elevated accordingly.
@@ -20,7 +21,7 @@ export class SSRICallParams {
    */
   noCache?: boolean;
   /**
-   * For mutation methods, if `sendNow` is set to `true`, the transaction would be sent immediately. Note that in this way you won't be able to get the transaction response. 
+   * For mutation methods, if `sendNow` is set to `true`, the transaction would be sent immediately. Note that in this way you won't be able to get the transaction response.
    */
   sendNow?: boolean;
 }
@@ -109,15 +110,15 @@ export abstract class SSRIContract {
  * Represents an SSRI server. Shall connect to an external server or run in WASM (TODO).
  */
 export class SSRIServer {
-  client: ccc.Client;
+  client: Client;
   serverURL?: string;
 
   /**
    * Creates an instance of SSRIServer.
-   * @param {ccc.Client} client - The client instance.
+   * @param {Client} client - The client instance.
    * @param {string} [serverURL] - The external server URL.
    */
-  constructor(client: ccc.Client, serverURL?: string) {
+  constructor(client: Client, serverURL?: string) {
     this.client = client;
     this.serverURL = serverURL;
   }

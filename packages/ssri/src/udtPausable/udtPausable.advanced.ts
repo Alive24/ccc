@@ -1,4 +1,4 @@
-import { HexLike } from "../../../core/src/hex/index";
+import { HexLike } from "@ckb-ccc/core";
 /**
  * Check if the UDT is paused for the specified lock hashes across the chain.
  * @param {HexLike[]} [lockHashes] - The lock hash to check.

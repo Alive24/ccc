@@ -1,7 +1,6 @@
-import { TransactionLike } from "../../../core/src/ckb/transaction";
-import { HexLike } from "../../../core/src/hex";
-import { UDT } from "../udt/index";
-import { isPausedNow } from "./udtPausable.advanced";
+import { TransactionLike, HexLike } from "@ckb-ccc/core";
+import { UDT } from "../udt/index.js";
+import { isPausedNow } from "./udtPausable.advanced.js";
 
 /**
  * Represents a pausable functionality for a UDT (User Defined Token).
@@ -27,7 +26,7 @@ export class UDTPausable {
    * @tag Mutation - This method represents a mutation of the onchain state and will return a transaction to be sent.
    */
   async pause(
-    tx?: TransactionLike,
+    tx: TransactionLike | null,
     lockHashes: HexLike[],
   ): Promise<TransactionLike> {
     // TODO: implement
