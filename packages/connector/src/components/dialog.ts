@@ -74,7 +74,11 @@ export class Dialog extends LitElement {
       padding-bottom: 1rem;
       border-bottom: 1px solid var(--divider);
     }
-
+    .close,
+    .back {
+      padding: 0.2rem 0.4rem;
+      cursor: pointer;
+    }
     .close svg,
     .back svg {
       width: 0.8rem;
@@ -86,7 +90,6 @@ export class Dialog extends LitElement {
     .close.active svg,
     .back.active svg {
       opacity: 1;
-      cursor: pointer;
     }
 
     .body {
