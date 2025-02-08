@@ -1,8 +1,10 @@
 import { ccc } from "@ckb-ccc/ccc";
 import { render, signer } from "@ckb-ccc/playground";
 
-// NOTE: Please use ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq2jk6pyw9vlnfakx7vp4t5lxg0lzvvsp3c5adflu as the signer
 const executor = new ccc.ssri.ExecutorJsonRpc("http://localhost:9090");
+
+const signerAddress = await signer.getRecommendedAddress();
+const {script: signerLock} = await ccc.Address.fromString(signerAddress, signer.client);
 
 const pudtScriptCell = await signer.client.findSingletonCellByType({
   // TypeID Code Hash. Don't change
@@ -20,13 +22,13 @@ const pudtCodeHash = pudtScriptCell.cellOutput.type?.hash();
 if (!pudtCodeHash) {
   throw new Error("PUDT code hash not found");
 }
-const pudtType = {
+const signerPudtType = {
   codeHash: pudtCodeHash,
   hashType: "type",
-  args: "0x02c93173368ec56f72ec023f63148461b80e7698eddd62cbd9dbe31a13f2b330",
+  args: signerLock.hash()
 };
 
-const pudt = new ccc.udt.Udt(pudtScriptCell.outPoint, pudtType, {
+const signerPudt = new ccc.udt.Udt(pudtScriptCell.outPoint, signerPudtType, {
   executor,
 });
 
@@ -47,8 +49,8 @@ const { script: lockB } = await ccc.Address.fromString(
   signer.client,
 );
 
-const pudtMintTx = (
-  await pudt.mint(signer, [
+const signerPudtMintTx = (
+  await signerPudt.mint(signer, [
     {
       to: lockA,
       amount: 1000000000000000000,
@@ -60,10 +62,9 @@ const pudtMintTx = (
   ])
 ).res;
 
-await render(pudtMintTx);
+await signerPudtMintTx.completeFeeBy(signer);
+await render(signerPudtMintTx);
 
-await pudtMintTx.completeFeeBy(signer);
-const pudtMintTxHash = await signer.sendTransaction(pudtMintTx);
+const signerPudtMintTxHash = await signer.sendTransaction(signerPudtMintTx);
 
-console.log(pudtMintTxHash);
-// "0xfb3edb43a9eb79ae875a06cc17140717a1beea1fb394219797b2ce1c8cf144d3"
+console.log(signerPudtMintTxHash);
