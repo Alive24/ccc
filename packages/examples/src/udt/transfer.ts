@@ -1,8 +1,11 @@
 import { ccc } from "@ckb-ccc/ccc";
 import { render, signer } from "@ckb-ccc/playground";
 
-// NOTE: Please use ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqgtlcnzzna2tqst7jw78egjpujn7hdxpackjmmdp as the signer
+// NOTE: Disconnect your wallet will be running this example with the default wallet with some balance of the a specific PUDT token (though you won't be able to send the transaction). If you want to use your own wallet and your own PUDT, please use the `mint.ts` example to mint some of your own PUDT tokens to your wallet first.
 const executor = new ccc.ssri.ExecutorJsonRpc("http://localhost:9090");
+
+const signerAddress = await signer.getRecommendedAddress();
+const { script: signerLock } = await ccc.Address.fromString(signerAddress, signer.client);
 
 const pudtScriptCell = await signer.client.findSingletonCellByType({
   // TypeID Code Hash. Don't change
@@ -20,13 +23,17 @@ const pudtCodeHash = pudtScriptCell.cellOutput.type?.hash();
 if (!pudtCodeHash) {
   throw new Error("PUDT code hash not found");
 }
-const pudtType = {
+
+// Note: If using the default wallet, we will instead use another predefined owner lock hash for the PUDT.
+
+const pudtOwnerLockHash = signerLock.hash() === "0x0ac59c147c592cd50958875ad50291f1c2f34025142c72526a9f5fb62f1b37b2" ? "0x02c93173368ec56f72ec023f63148461b80e7698eddd62cbd9dbe31a13f2b330" : signerLock.hash();
+const signerPudtType = {
   codeHash: pudtCodeHash,
   hashType: "type",
-  args: "0x02c93173368ec56f72ec023f63148461b80e7698eddd62cbd9dbe31a13f2b330",
+  args: pudtOwnerLockHash,
 };
 
-const pudt = new ccc.udt.Udt(pudtScriptCell.outPoint, pudtType, {
+const signerPudt = new ccc.udt.Udt(pudtScriptCell.outPoint, signerPudtType, {
   executor,
 });
 
@@ -55,8 +62,8 @@ const { script: lockB } = await ccc.Address.fromString(
   signer.client,
 );
 
-let pudtTransferTx = (
-  await pudt.transfer(signer, [
+let signerPudtTransferTx = (
+  await signerPudt.transfer(signer, [
     {
       to: lockA,
       amount: 100,
@@ -68,18 +75,20 @@ let pudtTransferTx = (
   ])
 ).res;
 
-await render(pudtTransferTx);
+await render(signerPudtTransferTx);
 
-pudtTransferTx = await pudt.completeBy(pudtTransferTx, signer);
-await pudtTransferTx.completeFeeBy(signer);
-const pudtTransferTxHash = await signer.sendTransaction(pudtTransferTx);
+signerPudtTransferTx = await signerPudt.completeBy(signerPudtTransferTx, signer);
+await signerPudtTransferTx.completeFeeBy(signer);
+await render(signerPudtTransferTx);
 
-console.log(pudtTransferTxHash);
+const signerPudtTransferTxHash = await signer.sendTransaction(signerPudtTransferTx);
+
+console.log(signerPudtTransferTxHash);
 // "0x20d2f9456b3cd1bf21b32bcffcb91dac68e0cf63e24b496a3a06420080dd08b6"
 
-// NOTE: As PUDT is in fact a pauseable UDT which paused transactions, though we instantiated it as a UDT, it still pauses transactions when the script is paused.
+// NOTE: As PUDT is in fact a pauseable UDT which pauses transactions, though we instantiated it as a UDT, it still pauses transactions when the script is paused.
 let shouldPudtPauseTx = (
-  await pudt.transfer(signer, [
+  await signerPudt.transfer(signer, [
     {
       to: pausedReceiverScript,
       amount: 1000,
@@ -91,7 +100,7 @@ let shouldPudtPauseTx = (
   ])
 ).res;
 
-shouldPudtPauseTx = await pudt.completeBy(shouldPudtPauseTx, signer);
+shouldPudtPauseTx = await signerPudt.completeBy(shouldPudtPauseTx, signer);
 await shouldPudtPauseTx.completeFeeBy(signer);
 
 // This would fail. Catches the error.
