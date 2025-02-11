@@ -48,6 +48,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@ckb-ccc/core": "workspace:*"
+    "@ckb-ccc/core": "workspace:*",
+    "ckb-ssri-executor-js": "0.1.0-alpha.2"
   }
 }

@@ -26,6 +26,7 @@ import { ParamValue } from "./types";
 import { MethodParam } from "./types";
 import { ParameterInput } from "./components/ParameterInput";
 import { TransactionSkeletonPanel } from "./components/TransactionSkeletonPanel";
+import { SSRIExecutor } from 'ckb-ssri-executor-js';
 
 const METHODS_OPTIONS = [
   "SSRI.version",
@@ -65,6 +66,7 @@ export default function SSRI() {
   const [transactionResult, setTransactionResult] = useState<
     ccc.Transaction | undefined
   >(undefined);
+  const [ssriExecutor, setSsriExecutor] = useState<ssri.Executor | null>(null);
 
   const addMethodParam = () => {
     const contextTypes = ["contextScript", "contextCell", "contextTransaction"];
@@ -136,7 +138,10 @@ export default function SSRI() {
     setMethodResult(undefined);
     setIconDataURL("");
 
-    const testSSRIExecutor = new ssri.ExecutorJsonRpc(SSRIExecutorURL);
+    if (!ssriExecutor) {
+      const ssriExecutor = new ssri.ExecutorWASM(SSRIExecutorURL);
+      setSsriExecutor(ssriExecutor);
+    }
 
     let contract: ssri.Trait | undefined;
     try {
@@ -153,7 +158,10 @@ export default function SSRI() {
       if (!scriptCell.cellOutput.type?.hash()) {
         throw new Error("Script cell type hash not found");
       }
-      contract = new ssri.Trait(scriptCell.outPoint, testSSRIExecutor);
+      if (!ssriExecutor) {
+        throw new Error("SSRI executor not initialized");
+      }
+      contract = new ssri.Trait(scriptCell.outPoint, ssriExecutor);
 
       if (!contract) {
         throw new Error("Contract not initialized");

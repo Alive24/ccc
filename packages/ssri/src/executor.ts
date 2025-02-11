@@ -1,7 +1,7 @@
 import { ccc } from "@ckb-ccc/core";
 import { cccA } from "@ckb-ccc/core/advanced";
 import { getMethodPath } from "./utils.js";
-
+import { SSRIExecutor } from 'ckb-ssri-executor-js';
 export type ContextTransaction = {
   script?: ccc.ScriptLike | null;
   cell?: Omit<ccc.CellLike, "outPoint"> | null;
@@ -41,16 +41,16 @@ export class ExecutorErrorDecode extends Error {
 export type ContextCode =
   | undefined
   | {
-      script?: undefined | null;
-      cell?: undefined | null;
-      tx?: undefined | null;
-    };
+    script?: undefined | null;
+    cell?: undefined | null;
+    tx?: undefined | null;
+  };
 
 export class ExecutorResponse<T> {
   constructor(
     public readonly res: T,
     public readonly cellDeps: ccc.OutPoint[],
-  ) {}
+  ) { }
 
   static new<T>(res: T, cellDeps?: ccc.OutPointLike[] | null) {
     return new ExecutorResponse(res, cellDeps?.map(ccc.OutPoint.from) ?? []);
@@ -199,5 +199,132 @@ export class ExecutorJsonRpc extends Executor {
       content,
       cell_deps.map(cccA.JsonRpcTransformers.outPointTo),
     );
+  }
+}
+
+
+export class ExecutorWASM extends Executor {
+  public readonly wasmExecutor: SSRIExecutor;
+  public readonly url: string;
+  private started = false;
+
+  /**
+   * Creates an instance of SSRI executor through Json RPC.
+   * @param {string} [url] - The external server URL.
+   */
+  constructor(
+    url: string,
+  ) {
+    super();
+
+    this.wasmExecutor = new SSRIExecutor();
+    this.url = url;
+  }
+
+  async confirmStarted() {
+    if (!this.started) {
+      await this.wasmExecutor.start("debug", this.url);
+      this.started = true;
+    }
+  }
+
+
+  /* Calls a method on the SSRI executor through SSRI Server.
+   * @param codeOutPoint - The code OutPoint.
+   * @param method - The SSRI method.
+   * @param args - The arguments for the method.
+   * @param context - The SSRI context for the method.
+   * @param context.script - The script level parameters.
+   * @param context.cell - The cell level parameters. Take precedence over script.
+   * @param context.transaction - The transaction level parameters. Take precedence over cell.
+   * @returns The result of the call.
+   */
+  async runScript(
+    codeOutPoint: ccc.OutPointLike,
+    method: string,
+    args: ccc.HexLike[],
+    context?: ContextCode | ContextScript | ContextCell | ContextTransaction,
+  ): Promise<ExecutorResponse<ccc.Hex>> {
+    const code = ccc.OutPoint.from(codeOutPoint);
+    const [rpcMethod] = (() => {
+      if (context?.tx) {
+        const tx = ccc.Transaction.from(context.tx);
+        return [
+          "run_script_level_transaction",
+          [
+            {
+              inner: cccA.JsonRpcTransformers.transactionFrom(tx),
+              hash: tx.hash(),
+            },
+          ],
+        ];
+      }
+      if (context?.cell) {
+        return [
+          "run_script_level_cell",
+          [
+            {
+              cell_output: cccA.JsonRpcTransformers.cellOutputFrom(
+                ccc.CellOutput.from(context.cell.cellOutput),
+              ),
+              hex_data: ccc.hexFrom(context.cell.outputData),
+            },
+          ],
+        ];
+      }
+      if (context?.script) {
+        return [
+          "run_script_level_script",
+          [cccA.JsonRpcTransformers.scriptFrom(context.script)],
+        ];
+      }
+      return ["run_script_level_code", []];
+    })();
+
+    switch (rpcMethod) {
+      case "run_script_level_transaction": {
+        if (!context?.tx) {
+          throw new ExecutorErrorUnknown("Transaction context is required");
+        }
+        const { content, cellDeps } = await this.wasmExecutor.runScriptLevelTx(
+          code.txHash,
+          Number(code.index),
+          [getMethodPath(method), ...args.map(ccc.hexFrom)],
+          context.tx
+        );
+        return ExecutorResponse.new(
+          content,
+          cellDeps
+        );
+      }
+      case "run_script_level_cell": {
+        if (!context?.cell) {
+          throw new ExecutorErrorUnknown("Cell context is required");
+        }
+        const { content, cellDeps } = await this.wasmExecutor.runScriptLevelCell(
+          code.txHash,
+          Number(code.index),
+          [getMethodPath(method), ...args.map(ccc.hexFrom)],
+          { ...context.cell, outPoint: { txHash: "0x0", index: "0x0" } }
+        );
+        return ExecutorResponse.new(
+          content,
+          cellDeps
+        );
+      }
+      case "run_script_level_code": {
+        const { content, cellDeps } = await this.wasmExecutor.runScriptLevelCode(
+          code.txHash,
+          Number(code.index),
+          [getMethodPath(method), ...args.map(ccc.hexFrom)],
+        );
+        return ExecutorResponse.new(
+          content,
+          cellDeps
+        );
+      }
+      default:
+        throw new ExecutorErrorUnknown(`Unsupported method: ${rpcMethod}`);
+    }
   }
 }
