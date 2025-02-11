@@ -60,14 +60,6 @@ const pudtUnpauseTx = (
     [targetReceiverBScript.hash()],
   )
 ).res;
-await render(pudtUnpauseTx);
 
 await pudtUnpauseTx.completeFeeBy(signer);
-const pudtUnpauseTxHash = await signer.sendTransaction(pudtUnpauseTx);
-console.log(pudtUnpauseTxHash);
-// "0x7715e78b4c5ded8928027c6aa610468eafce81c88e48e1267c1b787f52bb4929"
-
-// NOTE: This might be delayed if the transaction is not yet confirmed
-const pudtPaused = await pudt.enumeratePaused();
-console.log(pudtPaused);
-// {"res":["0x787e97af6860c58fcecd12653714330c003f5b960e09f027295a49e3c41d609f"],"cellDeps":[{"txHash":"0x7715e78b4c5ded8928027c6aa610468eafce81c88e48e1267c1b787f52bb4929","index":"0"}]}
+await render(pudtUnpauseTx);
