@@ -97,24 +97,9 @@ const pudtnPauseTx = (
     [targetReceiverBScript.hash()],
   )
 ).res;
-await render(pudtnPauseTx);
 
 await pudtPauseTx.completeFeeBy(signer);
 await pudtnPauseTx.completeFeeBy(signer);
-// NOTE: This would fail for 36 ("Nothing To DO") if run again because it's already paused and it would be deduped. Run unpause before pausing them again
-const pudtPauseTxHash = await signer.sendTransaction(pudtPauseTx);
-console.log(pudtPauseTxHash);
-// "0xc8df6b7edaa295f4044107e5c7f5b20fffe6e36e37fcf6513337c2be8c354e39"
-const pudtnPauseTxHash = await signer.sendTransaction(pudtnPauseTx);
-console.log(pudtnPauseTxHash);
-// "0x04fd05e091189d9beae525decd22d61cd8d63bd2ce6949369961fca7fa63a27b"
 
-// NOTE: This won't change because you need to upgrade the script to see the change
-const pudtnPaused = await pudtn.enumeratePaused();
-console.log(pudtnPaused);
-// {"res":[],"cellDeps":[]}
-
-// NOTE: This might be delayed if the transaction is not yet confirmed
-const pudtPaused = await pudt.enumeratePaused();
-console.log(pudtPaused);
-// {"res":["0x787e97af6860c58fcecd12653714330c003f5b960e09f027295a49e3c41d609f","0x0ac6e7d7ed8d8ac0832992f106dbebbd71a2cfa4791ef621dec081a047f7668d","0xa320a09489791af2e5e1fe84927eda84f71afcbd2c7a65cb419464fe46e75085","0x779c916fc89f7c7d03c97d7a2aa5cf4f854d4f279ef0a89f8568dc65e744b3a6"],"cellDeps":[{"txHash":"0xc8df6b7edaa295f4044107e5c7f5b20fffe6e36e37fcf6513337c2be8c354e39","index":"0"}]}
+await render(pudtPauseTx);
+await render(pudtnPauseTx);

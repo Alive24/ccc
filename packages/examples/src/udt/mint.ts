@@ -6,7 +6,7 @@ const executor = new ccc.ssri.ExecutorJsonRpc("http://localhost:9090");
 const signerAddress = await signer.getRecommendedAddress();
 const {script: signerLock} = await ccc.Address.fromString(signerAddress, signer.client);
 
-const pudtScriptCell = await signer.client.findSingletonCellByType({
+const udtScriptCell = await signer.client.findSingletonCellByType({
   // TypeID Code Hash. Don't change
   codeHash:
     "0x00000000000000000000000000000000000000000000000000545950455f4944",
@@ -14,21 +14,21 @@ const pudtScriptCell = await signer.client.findSingletonCellByType({
   // TypeID args. Change it to the args of the Type ID script of your UDT
   args: "0x8fd55df879dc6176c95f3c420631f990ada2d4ece978c9512c39616dead2ed56",
 });
-if (!pudtScriptCell) {
-  throw new Error("PUDT script cell not found");
+if (!udtScriptCell) {
+  throw new Error("udt script cell not found");
 }
 
-const pudtCodeHash = pudtScriptCell.cellOutput.type?.hash();
-if (!pudtCodeHash) {
-  throw new Error("PUDT code hash not found");
+const udtCodeHash = udtScriptCell.cellOutput.type?.hash();
+if (!udtCodeHash) {
+  throw new Error("udt code hash not found");
 }
-const signerPudtType = {
-  codeHash: pudtCodeHash,
+const signerUdtType = {
+  codeHash: udtCodeHash,
   hashType: "type",
   args: signerLock.hash()
 };
 
-const signerPudt = new ccc.udt.Udt(pudtScriptCell.outPoint, signerPudtType, {
+const signerUdt = new ccc.udt.Udt(udtScriptCell.outPoint, signerUdtType, {
   executor,
 });
 
@@ -49,8 +49,8 @@ const { script: lockB } = await ccc.Address.fromString(
   signer.client,
 );
 
-const signerPudtMintTx = (
-  await signerPudt.mint(signer, [
+const signerUdtMintTx = (
+  await signerUdt.mint(signer, [
     {
       to: lockA,
       amount: 1000000000000000000,
@@ -62,9 +62,5 @@ const signerPudtMintTx = (
   ])
 ).res;
 
-await signerPudtMintTx.completeFeeBy(signer);
-await render(signerPudtMintTx);
-
-const signerPudtMintTxHash = await signer.sendTransaction(signerPudtMintTx);
-
-console.log(signerPudtMintTxHash);
+await signerUdtMintTx.completeFeeBy(signer);
+await render(signerUdtMintTx);
